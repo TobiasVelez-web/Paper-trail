@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PaperTrail — Paperwork, explained</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2551C4">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PaperTrail">
 <style>
 :root{
   --paper:#FBF8F2; --card:#FFFFFF; --ink:#1E1A15; --muted:#736A5E; --faint:#A79D8F;
@@ -132,6 +138,8 @@ ol.plan p{font-size:14.5px;color:var(--muted);margin-bottom:6px}
 .hide{display:none}
 .err{background:var(--bad-l);border-radius:12px;padding:15px 17px;font-size:14.5px;margin-top:12px;color:var(--bad)}
 .actions{display:flex;gap:14px;margin-top:24px;flex-wrap:wrap;align-items:center}
+.privacy-note{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5}
+.privacy-note a{color:var(--brand);font-weight:600}
 footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0 40px;font-size:12.5px;color:var(--faint)}
 @media(max-width:600px){.hero h2{font-size:26px}.card{padding:22px 18px}.summary .row{gap:22px}}
 </style>
@@ -143,8 +151,12 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0 40px;font
     <div class="mark" id="mark"></div>
     <h1>PaperTrail</h1>
     <div class="sub">Paperwork, explained<br>Montgomery County, MD</div>
+    <button id="installBtn" onclick="doInstall()" style="display:none;margin-left:auto;background:var(--brand);color:#fff;border:0;border-radius:9px;padding:8px 14px;font:inherit;font-size:13px;font-weight:650;cursor:pointer">Install app</button>
   </div>
 </div></header>
+<div id="iosHint" style="display:none;background:var(--brand-l);border-bottom:1px solid var(--line);padding:10px 0;font-size:13px;color:var(--ink)">
+  <div class="wrap">To install: tap the Share button <b>⬆️</b> in Safari, then <b>Add to Home Screen</b>.</div>
+</div>
 
 <div class="wrap">
   <div class="hero">
@@ -214,6 +226,7 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0 40px;font
         <p class="lede">Photograph it. We'll check it against what clerks actually reject.</p>
         <label class="drop" for="file"><b>Tap to add a photo</b>
           <span>Utility bill · ID · birth certificate · pay stub</span></label>
+        <p class="privacy-note">Your photo is never saved. It is analyzed once and gone when you close the page. <a href="/privacy.html">How your privacy is protected</a></p>
         <input type="file" id="file" accept="image/*" class="hide">
         <div id="checkOut"></div>
       </div>
@@ -222,6 +235,7 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0 40px;font
         <p class="lede">Photograph a form and we'll explain every field, in your language.</p>
         <label class="drop" for="file2"><b>Tap to add a photo of the form</b>
           <span>School packet · application · notice</span></label>
+        <p class="privacy-note">Your photo is never saved. It is analyzed once and gone when you close the page. <a href="/privacy.html">How your privacy is protected</a></p>
         <input type="file" id="file2" accept="image/*" class="hide">
         <div id="formOut"></div>
       </div>
@@ -232,12 +246,10 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0 40px;font
 <footer><div class="wrap">
   PaperTrail explains public paperwork in plain language. It is not legal advice and does not determine
   whether you qualify for anything. Always confirm details with the official agency before you submit.
+  <br><br><a href="/privacy.html" style="color:var(--brand);font-weight:600">Privacy Policy</a> · Your documents are never saved.
 </div></footer>
 
 <script>
-// ── API KEY (stored in your browser, never in code) ─────────────────────────
-let ANTHROPIC_KEY = localStorage.getItem('papertrail_api_key') || '';
-
 const mk=document.getElementById('mark');
 [1,0,1,1,0,1].forEach(v=>{const i=document.createElement('i');if(v)i.className='on';mk.appendChild(i);});
 
@@ -276,8 +288,8 @@ function loading(el,m){el.innerHTML='<div class="load"><div class="dots"><i></i>
 async function claude(prompt,search){
   const body={model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]};
   if(search)body.tools=[{type:"web_search_20250305",name:"web_search"}];
-  const r=await fetch("https://api.anthropic.com/v1/messages",
-    {method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(body)});
+  const r=await fetch("/api/claude",
+    {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const d=await r.json();
   return (d.content||[]).map(c=>c.type==="text"?c.text:"").filter(Boolean).join("\n");
 }
@@ -286,8 +298,8 @@ async function claudeImg(file,prompt){
     r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
   const body={model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:[
     {type:"image",source:{type:"base64",media_type:file.type,data:b64}},{type:"text",text:prompt}]}]};
-  const r=await fetch("https://api.anthropic.com/v1/messages",
-    {method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(body)});
+  const r=await fetch("/api/claude",
+    {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const d=await r.json();
   return (d.content||[]).map(c=>c.type==="text"?c.text:"").join("\n");
 }
@@ -408,18 +420,34 @@ $('freeGo').onclick=()=>{const v=$('free').value.trim();if(v)startTask(v);};
 $('free').onkeydown=e=>{if(e.key==='Enter')$('freeGo').click();};
 $('back1').onclick=$('back2').onclick=()=>{show('pick');$('checkOut').innerHTML='';$('formOut').innerHTML='';};
 $('printIt').onclick=()=>window.print();
+</script>
 
-window.onload = function() {
-  if (!ANTHROPIC_KEY) {
-    const k = prompt('PaperTrail — enter your Anthropic API key to enable all AI features.\n\nYour key starts with: sk-ant-api03-\nGet one free at console.anthropic.com');
-    if (k && k.trim().startsWith('sk-ant')) {
-      localStorage.setItem('papertrail_api_key', k.trim());
-      ANTHROPIC_KEY = k.trim();
-    } else if (k) {
-      alert("That key doesn't look right. It should start with sk-ant-api03-");
-    }
+<script>
+// register service worker so the app is installable
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+}
+// Android/Chrome: capture the install prompt and show our own button
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt=e;
+  const b=document.getElementById('installBtn'); if(b) b.style.display='inline-block';
+});
+function doInstall(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.finally(()=>{deferredPrompt=null;
+    const b=document.getElementById('installBtn'); if(b) b.style.display='none';});
+}
+// iPhone/Safari: no prompt event, so show a one-time hint
+window.addEventListener('load', ()=>{
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone=window.navigator.standalone;
+  if(isIOS && !standalone && !localStorage.getItem('pt_ios_hint')){
+    const bar=document.getElementById('iosHint'); if(bar){ bar.style.display='block';
+      localStorage.setItem('pt_ios_hint','1'); }
   }
-};
+});
 </script>
 </body>
 </html>
