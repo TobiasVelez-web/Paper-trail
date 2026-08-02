@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PaperTrail — Paperwork, explained</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2551C4">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PaperTrail">
+<style>
+:root{
+  --paper:#FBF8F2; --card:#FFFFFF; --ink:#1E1A15; --muted:#736A5E; --faint:#A79D8F;
+  --line:#EAE3D6; --brand:#2551C4; --brand-d:#1A3A93; --brand-l:#EEF2FD;
+  --warm:#D9772F; --warm-l:#FDF3EA; --ok:#12805C; --ok-l:#EAF6F1;
+  --bad:#BE3A2B; --bad-l:#FCEEEC;
+  --sh:0 1px 2px rgba(30,26,21,.04), 0 8px 24px -12px rgba(30,26,21,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:0 24px}
+
+header{padding:26px 0 0}
+.brandrow{display:flex;align-items:center;gap:12px}
+.mark{width:30px;height:30px;display:grid;grid-template-columns:repeat(2,1fr);gap:3px;flex:0 0 30px}
+.mark i{border-radius:50%;background:var(--line)}
+.mark i.on{background:var(--brand)}
+.brandrow h1{font-size:21px;font-weight:700;letter-spacing:-.4px}
+.brandrow .sub{font-size:13px;color:var(--faint);margin-left:auto;text-align:right;line-height:1.4}
+
+.hero{padding:34px 0 26px}
+.hero h2{font-size:32px;font-weight:700;letter-spacing:-.7px;line-height:1.25;margin-bottom:10px}
+.hero p{font-size:16.5px;color:var(--muted);max-width:560px}
+
+.prefs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px}
+.pref{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:8px 12px;
+  display:flex;align-items:center;gap:8px;box-shadow:var(--sh)}
+.pref label{font-size:12px;color:var(--faint);font-weight:600;white-space:nowrap}
+select,input{font-family:inherit;font-size:14.5px;border:0;background:transparent;
+  color:var(--ink);outline:none;font-weight:600}
+select{cursor:pointer}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:28px;margin-bottom:20px;box-shadow:var(--sh)}
+.card h3{font-size:19px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
+.card .lede{font-size:15px;color:var(--muted);margin-bottom:22px}
+
+.tasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px}
+.task{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px 18px;
+  cursor:pointer;text-align:left;font:inherit;transition:.15s ease;display:flex;gap:13px;align-items:flex-start}
+.task:hover{border-color:var(--brand);background:var(--brand-l);transform:translateY(-2px)}
+.task .ic{flex:0 0 20px;width:20px;height:20px;color:var(--brand);margin-top:2px}
+.task .ic svg{width:20px;height:20px;display:block}
+.task b{display:block;font-size:15px;font-weight:650;margin-bottom:2px;letter-spacing:-.2px}
+.task small{color:var(--faint);font-size:12.5px;font-weight:500}
+
+.freebox{margin-top:20px;background:var(--paper);border:1px solid var(--line);
+  border-radius:13px;padding:6px 6px 6px 18px;display:flex;gap:10px;align-items:center}
+.freebox input{flex:1;font-weight:500;font-size:15px;padding:10px 0}
+.btn{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:12px 22px;
+  font-size:14.5px;font-weight:650;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
+.btn:hover{background:var(--brand-d)}
+.btn:disabled{background:var(--faint);cursor:default}
+.btn.ghost{background:transparent;color:var(--brand);padding:10px 0}
+
+.steps-bar{display:flex;gap:6px;margin-bottom:26px}
+.steps-bar div{height:4px;flex:1;border-radius:99px;background:var(--line)}
+.steps-bar div.on{background:var(--brand)}
+
+.q{margin-bottom:24px}
+.q .qt{font-size:16px;font-weight:650;margin-bottom:11px;letter-spacing:-.2px}
+.opts{display:flex;gap:9px;flex-wrap:wrap}
+.opt{border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:9px 18px;
+  font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:.14s;color:var(--muted)}
+.opt:hover{border-color:var(--brand);color:var(--brand)}
+.opt.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.summary{background:var(--ink);color:#fff;border-radius:14px;padding:22px 24px;margin-bottom:22px}
+.summary .row{display:flex;gap:34px;flex-wrap:wrap}
+.summary .k{font-size:11.5px;color:#A79D8F;font-weight:650;margin-bottom:2px}
+.summary .v{font-size:23px;font-weight:700;letter-spacing:-.4px}
+.summary p{font-size:14px;color:#C9C1B4;margin-top:14px}
+
+.sec-h{font-size:13px;font-weight:700;color:var(--faint);margin:26px 0 12px}
+.docs{list-style:none}
+.docs li{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.docs li:last-child{border-bottom:0}
+.chk{width:19px;height:19px;border:2px solid var(--line);border-radius:5px;flex:0 0 19px;
+  margin-top:3px;transition:.14s;display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:transparent;font-weight:800}
+.docs li.done .chk{background:var(--ok);border-color:var(--ok);color:#fff}
+.docs li.done .dn{text-decoration:line-through;color:var(--faint)}
+.dn{font-size:15px;font-weight:600}
+.dnote{font-size:13.5px;color:var(--muted);display:block;font-weight:400;margin-top:1px}
+
+ol.plan{list-style:none;counter-reset:st}
+ol.plan li{counter-increment:st;position:relative;padding:0 0 24px 46px}
+ol.plan li:not(:last-child)::after{content:"";position:absolute;left:14px;top:34px;bottom:4px;width:2px;background:var(--line)}
+ol.plan li::before{content:counter(st);position:absolute;left:0;top:0;width:30px;height:30px;
+  background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:13.5px;font-weight:700}
+ol.plan h4{font-size:16px;font-weight:650;margin-bottom:4px;letter-spacing:-.2px}
+ol.plan p{font-size:14.5px;color:var(--muted);margin-bottom:6px}
+.pill{display:inline-block;background:var(--brand-l);color:var(--brand);font-size:12.5px;
+  font-weight:650;padding:3px 11px;border-radius:99px}
+
+.note{border-radius:12px;padding:16px 18px;margin-top:18px;background:var(--warm-l);border:1px solid #F2DCC5}
+.note b{color:var(--warm);font-size:14px;font-weight:700}
+.note ul{margin:6px 0 0 18px;font-size:14px;color:var(--muted)}
+.note li{margin-bottom:4px}
+
+.drop{border:2px dashed var(--line);border-radius:14px;padding:34px 20px;text-align:center;
+  cursor:pointer;display:block;transition:.15s;background:var(--paper)}
+.drop:hover{border-color:var(--brand);background:var(--brand-l)}
+.drop b{font-size:15px;display:block;margin-bottom:3px}
+.drop span{font-size:13.5px;color:var(--faint)}
+.verdict{display:flex;gap:13px;align-items:flex-start;padding:17px 19px;border-radius:12px;margin-top:14px}
+.verdict.ok{background:var(--ok-l)}.verdict.bad{background:var(--bad-l)}.verdict.warn{background:var(--warm-l)}
+.verdict .m{width:24px;height:24px;border-radius:50%;color:#fff;display:flex;align-items:center;
+  justify-content:center;font-size:14px;font-weight:800;flex:0 0 24px}
+.verdict.ok .m{background:var(--ok)}.verdict.bad .m{background:var(--bad)}.verdict.warn .m{background:var(--warm)}
+.verdict b{font-size:15px}.verdict p{font-size:14px;color:var(--muted);margin-top:2px}
+
+.tabs{display:flex;gap:4px;background:var(--paper);border:1px solid var(--line);
+  border-radius:12px;padding:4px;margin-bottom:22px}
+.tab{flex:1;border:0;background:transparent;border-radius:9px;padding:10px;font-family:inherit;
+  font-size:14px;font-weight:650;color:var(--muted);cursor:pointer;transition:.14s}
+.tab.on{background:var(--card);color:var(--ink);box-shadow:var(--sh)}
+
+.load{display:flex;gap:11px;align-items:center;color:var(--muted);font-size:15px;padding:22px 0}
+.dots{display:flex;gap:5px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--brand);animation:b 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.22}30%{opacity:1}}
+.hide{display:none}
+.err{background:var(--bad-l);border-radius:12px;padding:15px 17px;font-size:14.5px;margin-top:12px;color:var(--bad)}
+.actions{display:flex;gap:14px;margin-top:24px;flex-wrap:wrap;align-items:center}
+.privacy-note{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5}
+.privacy-note a{color:var(--brand);font-weight:600}
+footer{border-top:1px solid var(--line);margin-top:44px;padding:22px 0 40px;font-size:12.5px;color:var(--faint)}
+@media(max-width:600px){.hero h2{font-size:26px}.card{padding:22px 18px}.summary .row{gap:22px}}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="brandrow">
+    <div class="mark" id="mark"></div>
+    <h1>PaperTrail</h1>
+    <div class="sub">Paperwork, explained<br>Montgomery County, MD</div>
+    <button id="installBtn" onclick="doInstall()" style="display:none;margin-left:auto;background:var(--brand);color:#fff;border:0;border-radius:9px;padding:8px 14px;font:inherit;font-size:13px;font-weight:650;cursor:pointer">Install app</button>
+  </div>
+</div></header>
+<div id="iosHint" style="display:none;background:var(--brand-l);border-bottom:1px solid var(--line);padding:10px 0;font-size:13px;color:var(--ink)">
+  <div class="wrap">To install: tap the Share button <b>⬆️</b> in Safari, then <b>Add to Home Screen</b>.</div>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h2 data-i18n>Every form, explained<br>in the language you think in.</h2>
+    <p data-i18n>Tell us what you need to get done. We'll tell you exactly what to bring, what to expect, and what people usually get wrong.</p>
+  </div>
+  <div class="prefs">
+    <div class="pref"><label data-i18n>Language</label>
+      <select id="lang">
+        <option>English</option><option>Español</option><option>አማርኛ Amharic</option>
+        <option>中文 Chinese</option><option>Tiếng Việt</option><option>Français</option>
+        <option>한국어 Korean</option><option>Português</option><option>العربية Arabic</option>
+        <option>Русский Russian</option><option>हिन्दी Hindi</option><option>বাংলা Bengali</option>
+        <option>Kreyòl Ayisyen</option><option>Tagalog</option><option>اردو Urdu</option>
+        <option>فارسی Farsi</option><option>Türkçe</option><option>Kiswahili</option>
+        <option>Soomaali Somali</option><option>ትግርኛ Tigrinya</option>
+      </select>
+    </div>
+    <div class="pref"><label data-i18n>Reading level</label>
+      <select id="reading"><option value="plain">Plain</option>
+        <option value="simple">Very simple</option><option value="detailed">Detailed</option></select>
+    </div>
+    <div class="pref"><label data-i18n>Need it by</label><input type="date" id="deadline" style="font-size:14px"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <section id="pick">
+    <div class="card">
+      <h3 data-i18n>What do you need to get done?</h3>
+      <p class="lede" data-i18n>Pick something common, or just describe your situation.</p>
+      <div class="tasks" id="tasks"></div>
+      <div class="freebox">
+        <input id="free" placeholder="My daughter needs to play school soccer…">
+        <button class="btn" id="freeGo" data-i18n>Start</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="qs" class="card hide">
+    <div class="steps-bar"><div class="on"></div><div></div><div></div></div>
+    <h3 id="qTitle">A few quick questions</h3>
+    <p class="lede" data-i18n>We only ask what actually changes your answer.</p>
+    <div id="qBody"></div>
+    <div class="actions">
+      <button class="btn" id="qGo" disabled data-i18n>Build my checklist</button>
+      <button class="btn ghost" id="back1" data-i18n>Start over</button>
+    </div>
+  </section>
+
+  <section id="plan" class="hide">
+    <div class="card">
+      <div class="steps-bar"><div class="on"></div><div class="on"></div><div class="on"></div></div>
+      <div id="planBody"></div>
+      <div class="actions">
+        <button class="btn ghost" id="back2" data-i18n>Start over</button>
+        <button class="btn ghost" id="printIt" data-i18n>Print checklist</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab on" data-t="check" data-i18n>Check a document</button>
+        <button class="tab" data-t="form" data-i18n>Explain a form</button>
+      </div>
+      <div id="tabCheck">
+        <h3 data-i18n>Will this document be accepted?</h3>
+        <p class="lede" data-i18n>Photograph it. We'll check it against what clerks actually reject.</p>
+        <label class="drop" for="file"><b>Tap to add a photo</b>
+          <span>Utility bill · ID · birth certificate · pay stub</span></label>
+        <p class="privacy-note">Your photo is never saved. It is analyzed once and gone when you close the page. <a href="/privacy.html">How your privacy is protected</a></p>
+        <input type="file" id="file" accept="image/*" class="hide">
+        <div id="checkOut"></div>
+      </div>
+      <div id="tabForm" class="hide">
+        <h3 data-i18n>What is this form asking me?</h3>
+        <p class="lede" data-i18n>Photograph a form and we'll explain every field, in your language.</p>
+        <label class="drop" for="file2"><b>Tap to add a photo of the form</b>
+          <span>School packet · application · notice</span></label>
+        <p class="privacy-note">Your photo is never saved. It is analyzed once and gone when you close the page. <a href="/privacy.html">How your privacy is protected</a></p>
+        <input type="file" id="file2" accept="image/*" class="hide">
+        <div id="formOut"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">
+  PaperTrail explains public paperwork in plain language. It is not legal advice and does not determine
+  whether you qualify for anything. Always confirm details with the official agency before you submit.
+  <br><br><a href="/privacy.html" style="color:var(--brand);font-weight:600">Privacy Policy</a> · Your documents are never saved. <span style="opacity:.4">v3-fix</span>
+</div></footer>
+
+<script>
+const mk=document.getElementById('mark');
+[1,0,1,1,0,1].forEach(v=>{const i=document.createElement('i');if(v)i.className='on';mk.appendChild(i);});
+
+const I={school:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-5h6v5"/></svg>`,ball:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg>`,health:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,meal:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 3v9a3 3 0 0 0 6 0V3M9 12v9M18 3c-1.5 2-2 4-2 6s.5 3 2 3v9"/></svg>`,cap:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 4 2 9l10 5 10-5-10-5zM6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>`,card:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>`,book:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 4h7a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-7a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h7z"/></svg>`,vote:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M8 11V6a4 4 0 0 1 8 0v5M9 16l2 2 4-4"/></svg>`,cart:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.5 11h10L20 7H6"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>`,car:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 16v-4l2-5h12l2 5v4M4 16h16M4 16v2M20 16v2"/><circle cx="8" cy="16" r="1.3"/><circle cx="16" cy="16" r="1.3"/></svg>`,case:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>`,gov:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 21V10M20 21V10M12 3 3 8h18l-9-5zM8 21v-7M16 21v-7"/></svg>`};
+const TASKS=[
+  [I.school,"Enroll a child in school","MCPS \u00b7 new to the county"],
+  [I.ball,"School sports forms","MCPS athletics"],
+  [I.health,"Immunization records","Maryland school entry"],
+  [I.meal,"FARMS meal application","MCPS \u00b7 free & reduced meals"],
+  [I.cap,"Complete the FAFSA","Federal student aid"],
+  [I.card,"Renew a driver's license","Maryland MVA"],
+  [I.book,"Apply for a first passport","U.S. State Department"],
+  [I.vote,"Register to vote","Maryland elections"],
+  [I.cart,"Apply for SNAP benefits","Maryland social services"],
+  [I.car,"Register a car","Maryland MVA"],
+  [I.case,"Apply for unemployment","Maryland labor"],
+  [I.gov,"Start an LLC","Maryland + IRS"]
+];
+const tEl=document.getElementById('tasks');
+TASKS.forEach(t=>{const b=document.createElement('button');b.className='task';
+  b.innerHTML='<span class="ic">'+t[0]+'</span><span><b>'+t[1]+'</b><small>'+t[2]+'</small></span>';
+  b.onclick=()=>startTask(t[1]);tEl.appendChild(b);});
+
+let TASK='',QUESTIONS=[],ANSWERS={};
+const $=id=>document.getElementById(id);
+const lang=()=>$('lang').value;
+const level=()=>({plain:'plain everyday language at about an 8th-grade reading level',
+  simple:'very short simple sentences at about a 5th-grade reading level, for someone new to the United States',
+  detailed:'thorough and precise, including exact form numbers and official legal names'})[$('reading').value];
+const due=()=>$('deadline').value;
+
+// ---------- INTERFACE TRANSLATION ----------
+// Store the original English so we can restore it and re-translate cleanly.
+const I18N_EN = {ui:[], tasks:[]};
+document.querySelectorAll('[data-i18n]').forEach(el=>I18N_EN.ui.push(el.innerHTML));
+TASKS.forEach(t=>I18N_EN.tasks.push([t[1],t[2]]));
+const I18N_CACHE = {English:{ui:I18N_EN.ui.slice(), tasks:I18N_EN.tasks.map(t=>t.slice())}};
+
+function applyI18N(pack){
+  document.querySelectorAll('[data-i18n]').forEach((el,i)=>{ if(pack.ui[i]!=null) el.innerHTML=pack.ui[i]; });
+  const btns=document.querySelectorAll('#tasks .task');
+  btns.forEach((b,i)=>{
+    if(!pack.tasks[i]) return;
+    b.querySelector('b').textContent=pack.tasks[i][0];
+    b.querySelector('small').textContent=pack.tasks[i][1];
+  });
+}
+
+async function translateUI(){
+  const L=$('lang').value;
+  if(I18N_CACHE[L]){ applyI18N(I18N_CACHE[L]); document.documentElement.lang = L; return; }
+  // build one compact translation request for all strings at once (cheap, one Haiku call)
+  const uiList=I18N_EN.ui.map(x=>x.replace(/<br>/g,' / '));
+  const taskList=I18N_EN.tasks.map(t=>t[0]+' :: '+t[1]);
+  try{
+    const raw=await claude('Translate each line into '+L+'. Keep the same order and count. '+
+      'Return ONLY a JSON object like {"ui":["...","..."],"tasks":["title :: subtitle","..."]} with no other text.\n\n'+
+      'UI ('+uiList.length+' lines):\n'+uiList.map((x,i)=>i+': '+x).join('\n')+
+      '\n\nTASKS ('+taskList.length+' lines):\n'+taskList.map((x,i)=>i+': '+x).join('\n'));
+    const obj=pj(raw);
+    const pack={
+      ui:(obj.ui||[]).map(x=>x.replace(/ \/ /g,'<br>')),
+      tasks:(obj.tasks||[]).map(x=>{const p=x.split('::');return [(p[0]||'').trim(),(p[1]||'').trim()];})
+    };
+    // fall back to English for any missing entries
+    for(let i=0;i<I18N_EN.ui.length;i++) if(pack.ui[i]==null) pack.ui[i]=I18N_EN.ui[i];
+    for(let i=0;i<I18N_EN.tasks.length;i++) if(!pack.tasks[i]) pack.tasks[i]=I18N_EN.tasks[i];
+    I18N_CACHE[L]=pack; applyI18N(pack); document.documentElement.lang=L;
+  }catch(e){ /* if translation fails, leave English UI; content still comes in chosen language */ }
+}
+
+function show(ids){['pick','qs','plan'].forEach(s=>$(s).classList.add('hide'));
+  (Array.isArray(ids)?ids:[ids]).forEach(i=>$(i).classList.remove('hide'));window.scrollTo(0,0);}
+function loading(el,m){el.innerHTML='<div class="load"><div class="dots"><i></i><i></i><i></i></div>'+m+'</div>';}
+
+async function claude(prompt,search){
+  const body={model:"claude-haiku-4-5-20251001",max_tokens:1024,messages:[{role:"user",content:prompt}]};
+  const r=await fetch("/api/claude",
+    {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json();
+  if(d.error){ throw new Error((d.error.message||d.error.type||JSON.stringify(d.error))); }
+  if(!d.content){ throw new Error('No response from API (status '+r.status+'): '+JSON.stringify(d).slice(0,200)); }
+  return (d.content||[]).map(c=>c.type==="text"?c.text:"").filter(Boolean).join("\n");
+}
+async function claudeImg(file,prompt){
+  const b64=await new Promise((res,rej)=>{const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+  const body={model:"claude-haiku-4-5-20251001",max_tokens:1024,messages:[{role:"user",content:[
+    {type:"image",source:{type:"base64",media_type:file.type,data:b64}},{type:"text",text:prompt}]}]};
+  const r=await fetch("/api/claude",
+    {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json();
+  if(d.error){ throw new Error((d.error.message||d.error.type||JSON.stringify(d.error))); }
+  if(!d.content){ throw new Error('No response (status '+r.status+'): '+JSON.stringify(d).slice(0,200)); }
+  return (d.content||[]).map(c=>c.type==="text"?c.text:"").join("\n");
+}
+function pj(t){
+  if(!t||!t.trim()) throw new Error('Empty response from AI');
+  let c=t.replace(/```json/gi,'').replace(/```/g,'').trim();
+  const a=c.indexOf('{'), b=c.lastIndexOf('}');
+  if(a<0||b<0) throw new Error('AI did not return JSON. It said: '+t.slice(0,150));
+  c=c.slice(a,b+1);
+  try{ return JSON.parse(c); }
+  catch(err){ throw new Error('Could not read AI response: '+c.slice(0,150)); }
+}
+
+async function startTask(task){
+  TASK=task;ANSWERS={};show('qs');$('qTitle').textContent=task;
+  loading($('qBody'),'Working out what we actually need to ask…');$('qGo').disabled=true;
+  try{
+    const t=await claude('Someone in Montgomery County, Maryland needs help with: "'+task+'".\n\n'+
+      'Ask ONLY questions whose answers genuinely change the steps, documents, fees or timeline. '+
+      'Never ask what you could reasonably assume. Never ask for personal identifying information '+
+      '(name, SSN, address, date of birth).\n\n'+
+      'Return 2 to 4 questions, each with 2 to 5 short options. Include an "I am not sure" option '+
+      'wherever a person plausibly would not know.\n\nWrite the questions in '+lang()+'.\n\n'+
+      'Respond with ONLY this JSON:\n{"questions":[{"q":"text","options":["a","b"]}]}');
+    QUESTIONS=pj(t).questions;renderQs();
+  }catch(e){$('qBody').innerHTML='<div class="err">Could not load questions.<br><br><b>Error:</b> '+(e.message||e)+'</div>';}
+}
+function renderQs(){
+  $('qBody').innerHTML='';
+  QUESTIONS.forEach((q,i)=>{
+    const d=document.createElement('div');d.className='q';
+    d.innerHTML='<div class="qt">'+(i+1)+'. '+q.q+'</div>';
+    const row=document.createElement('div');row.className='opts';
+    q.options.forEach(o=>{const b=document.createElement('button');b.className='opt';b.textContent=o;
+      b.onclick=()=>{ANSWERS[q.q]=o;[...row.children].forEach(c=>c.classList.remove('sel'));
+        b.classList.add('sel');$('qGo').disabled=Object.keys(ANSWERS).length<QUESTIONS.length;};
+      row.appendChild(b);});
+    d.appendChild(row);$('qBody').appendChild(d);
+  });
+}
+
+$('qGo').onclick=async()=>{
+  show('plan');loading($('planBody'),'Checking current official requirements…');
+  const ctx=Object.entries(ANSWERS).map(([k,v])=>k+' -> '+v).join('; ');
+  try{
+    const t=await claude('Task: "'+TASK+'". Location: Montgomery County, Maryland. What they told us: '+ctx+'.\n'+
+      (due()?'They need this completed by '+due()+'. Work backwards and tell them the date they must start.\n':'')+
+      '\nGive the standard process, documents, and steps for this task in Montgomery County, Maryland. '+
+      'For any specific fee, deadline, or form number, tell the person to confirm the current amount on the '+
+      'official website, since these change over time. Be accurate about the process and documents.\n\n'+
+      'Write everything in '+lang()+', in '+level()+'.\n\nRespond with ONLY this JSON:\n'+
+      '{"title":"short plain title","summary":"two sentences on what this really involves",'+
+      '"totalTime":"realistic end-to-end estimate","cost":"total fees or Free",'+
+      '"office":"which office or website handles this","startBy":"date they must start by, or empty string",'+
+      '"documents":[{"name":"document","note":"what makes it valid"}],'+
+      '"steps":[{"title":"step","detail":"what to do concretely","time":"how long"}],'+
+      '"mistakes":["specific common error","another"]}',true);
+    render(pj(t));
+  }catch(e){$('planBody').innerHTML='<div class="err">Could not build the checklist.<br><br><b>Error:</b> '+(e.message||e)+'</div>';}
+};
+
+function render(p){
+  let h='<h3>'+p.title+'</h3><p class="lede">'+p.summary+'</p>';
+  h+='<div class="summary"><div class="row">'+
+     '<div><div class="k">Time needed</div><div class="v">'+p.totalTime+'</div></div>'+
+     '<div><div class="k">Cost</div><div class="v">'+p.cost+'</div></div>'+
+     (p.startBy?'<div><div class="k">Start by</div><div class="v">'+p.startBy+'</div></div>':'')+
+     '</div>'+(p.office?'<p>Handled by: '+p.office+'</p>':'')+'</div>';
+  h+='<div class="sec-h">What to bring</div><ul class="docs" id="docs">';
+  p.documents.forEach(d=>{h+='<li><span class="chk">\u2713</span><span><span class="dn">'+d.name+'</span>'+
+    (d.note?'<span class="dnote">'+d.note+'</span>':'')+'</span></li>';});
+  h+='</ul><div class="sec-h">Steps</div><ol class="plan">';
+  p.steps.forEach(s=>{h+='<li><h4>'+s.title+'</h4><p>'+s.detail+'</p>'+
+    (s.time?'<span class="pill">'+s.time+'</span>':'')+'</li>';});
+  h+='</ol>';
+  if(p.mistakes&&p.mistakes.length){
+    h+='<div class="note"><b>What people usually get wrong</b><ul>';
+    p.mistakes.forEach(m=>h+='<li>'+m+'</li>');h+='</ul></div>';}
+  $('planBody').innerHTML=h;
+  document.querySelectorAll('#docs li').forEach(li=>li.onclick=()=>li.classList.toggle('done'));
+}
+
+$('file').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;loading($('checkOut'),'Reading the document…');
+  try{
+    const p=pj(await claudeImg(f,'Someone wants to submit this for: "'+(TASK||'a government or school process')+'".\n\n'+
+      'Identify what it is, then judge whether it would be accepted. Check what clerks actually reject documents '+
+      'for: expired, too old for a proof-of-residency rule, a photocopy where an original is required, '+
+      'name mismatch, illegible.\n\nAnswer in '+lang()+', in '+level()+'.\n\nRespond with ONLY this JSON:\n'+
+      '{"document":"what it is","verdict":"accepted|problem|unclear","reason":"one clear sentence",'+
+      '"fix":"what to do instead, or empty"}'));
+    const cls=p.verdict==='accepted'?'ok':(p.verdict==='problem'?'bad':'warn');
+    const m=p.verdict==='accepted'?'\u2713':(p.verdict==='problem'?'\u2715':'?');
+    $('checkOut').innerHTML='<div class="verdict '+cls+'"><span class="m">'+m+'</span><span><b>'+
+      p.document+'</b><p>'+p.reason+(p.fix?'<br><b>Do this instead:</b> '+p.fix:'')+'</p></span></div>';
+  }catch(err){$('checkOut').innerHTML='<div class="err">Could not read that image.<br><br><b>Error:</b> '+(err.message||err)+'</div>';}
+};
+
+$('file2').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;loading($('formOut'),'Reading the form…');
+  try{
+    const p=pj(await claudeImg(f,'This is a form someone has been given. Explain it to them.\n\n'+
+      'For each field or question on the form, say what it is asking for and why it is needed. Flag anything '+
+      'commonly filled out wrong. Do not give legal advice and do not tell them whether they qualify for anything.\n\n'+
+      'Answer in '+lang()+', in '+level()+'.\n\nRespond with ONLY this JSON:\n'+
+      '{"form":"what this form is","purpose":"one sentence on why it exists",'+
+      '"fields":[{"label":"field name","means":"what it is asking","tip":"how people get it wrong, or empty"}],'+
+      '"alsoNeed":["any document you must attach"]}'));
+    let h='<div class="verdict ok" style="margin-bottom:18px"><span class="m">i</span><span><b>'+p.form+
+      '</b><p>'+p.purpose+'</p></span></div><div class="sec-h">Field by field</div><ol class="plan">';
+    p.fields.forEach(f=>{h+='<li><h4>'+f.label+'</h4><p>'+f.means+'</p>'+
+      (f.tip?'<span class="pill">'+f.tip+'</span>':'')+'</li>';});
+    h+='</ol>';
+    if(p.alsoNeed&&p.alsoNeed.length){h+='<div class="note"><b>Attach these too</b><ul>';
+      p.alsoNeed.forEach(a=>h+='<li>'+a+'</li>');h+='</ul></div>';}
+    $('formOut').innerHTML=h;
+  }catch(err){$('formOut').innerHTML='<div class="err">Could not read that form.<br><br><b>Error:</b> '+(err.message||err)+'</div>';}
+};
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+  $('tabCheck').classList.toggle('hide',t.dataset.t!=='check');
+  $('tabForm').classList.toggle('hide',t.dataset.t!=='form');});
+$('freeGo').onclick=()=>{const v=$('free').value.trim();if(v)startTask(v);};
+$('free').onkeydown=e=>{if(e.key==='Enter')$('freeGo').click();};
+$('back1').onclick=$('back2').onclick=()=>{show('pick');$('checkOut').innerHTML='';$('formOut').innerHTML='';};
+$('printIt').onclick=()=>window.print();
+// when language changes, translate the whole interface
+$('lang').addEventListener('change', translateUI);
+</script>
+
+<script>
+// register service worker so the app is installable
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+}
+// Android/Chrome: capture the install prompt and show our own button
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt=e;
+  const b=document.getElementById('installBtn'); if(b) b.style.display='inline-block';
+});
+function doInstall(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.finally(()=>{deferredPrompt=null;
+    const b=document.getElementById('installBtn'); if(b) b.style.display='none';});
+}
+// iPhone/Safari: no prompt event, so show a one-time hint
+window.addEventListener('load', ()=>{
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone=window.navigator.standalone;
+  if(isIOS && !standalone && !localStorage.getItem('pt_ios_hint')){
+    const bar=document.getElementById('iosHint'); if(bar){ bar.style.display='block';
+      localStorage.setItem('pt_ios_hint','1'); }
+  }
+});
+</script>
+</body>
+</html>
